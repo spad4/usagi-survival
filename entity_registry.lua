@@ -8,7 +8,8 @@ for _, entity in pairs(load_entities) do
     ENTITIES["NEW_" .. entity.id] = function (x, y) 
         local new_entity = {
             ["x"] = x,
-            ["y"] = y
+            ["y"] = y,
+            ["animation_start"] = usagi.elapsed
         }
         setmetatable(new_entity, {__index = Entity})
         Entity.__index = Entity

@@ -102,9 +102,7 @@ local function fresh_state()
     }
   }
 
-  to_return.world = new_world()
-
-  to_return.world[100][100] = 2
+  to_return.world = new_noise_world()
 
   return to_return
 end
@@ -152,6 +150,27 @@ end
 
 update_entity_props(State)
 
+local function draw_entities()
+  local offset = {
+    x = math.floor(Camera.x) - CAMERA_HALF_X,
+    y = math.floor(Camera.y) - CAMERA_HALF_Y
+  }
+  local camera_offset = {
+    x = Camera.x % 1,
+    y = Camera.y % 1
+  }
+  for _, entity in pairs(State.entities) do
+    setmetatable(entity, {__index = Entity})
+    local x_from_camera = entity.x - offset.x
+    local y_from_camera = entity.y - offset.y
+    if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X+1 and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
+      local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
+      local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
+      entity:draw(x, y)
+    end
+  end
+end
+
 function _update(dt)
   if input.key_held(input.KEY_LCTRL) then
     if input.key_pressed(input.KEY_S) then
@@ -159,11 +178,9 @@ function _update(dt)
       print("save")
     end
     if input.key_pressed(input.KEY_C) then
-      State.world = new_world()
-    end
-    if input.key_pressed(input.KEY_V) then
       State.world = new_noise_world()
     end
+    
     return
   end
 
@@ -205,6 +222,15 @@ function _update(dt)
     MapEnabled = not MapEnabled
   end
 
+  if input.key_pressed(input.KEY_H) then
+    local slime = ENTITIES.NEW_SLIME(Player.x, Player.y)
+    table.insert(State.entities, slime)
+  end
+
+  if input.key_pressed(input.KEY_T) then
+    DRAW = true
+  end
+
   movement_vector = util.vec_normalize(movement_vector)
   State.current_tile = State.world[math.floor(Player.y + 0.5)][math.floor(Player.x + 0.5)]
   local tile_speed_modifier = TILES[State.current_tile].speed_modifier
@@ -241,31 +267,6 @@ local function draw_terrain()
         local y = (row - 2 - camera_offset.y) * TILE_SIZE;
         local sprite_index = TILES[tile].sprite
         gfx.spr(sprite_index, x, y)
-        -- gfx.rect_fill((col - 2 - camera_offset.x) * TILE_SIZE, (row - 2 - camera_offset.y) * TILE_SIZE, TILE_SIZE, TILE_SIZE, PALETTE[tostring(tile)])
-      end
-    end
-  end
-end
-
-local function draw_entities()
-  local offset = {
-    x = math.floor(Camera.x) - CAMERA_HALF_X,
-    y = math.floor(Camera.y) - CAMERA_HALF_Y
-  }
-  local camera_offset = {
-    x = Camera.x % 1,
-    y = Camera.y % 1
-  }
-  for _, entity in pairs(State.entities) do
-    setmetatable(entity, {__index = Entity})
-    local sprite = entity:draw()
-    if sprite then
-      local x_from_camera = entity.x - offset.x
-      local y_from_camera = entity.y - offset.y
-      local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
-      local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
-      if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
-        gfx.spr(sprite, x, y)
       end
     end
   end
@@ -296,6 +297,12 @@ local function draw_ui()
 end
 
 function _draw(_dt)
+  -- if DRAW then
+  --   gfx.clear(gfx.COLOR_BLACK)
+  --   draw_entities()
+  --   print(Player.is_moving)
+  --   DRAW = false
+  -- end
   gfx.clear(gfx.COLOR_BLACK)
 
   draw_terrain()

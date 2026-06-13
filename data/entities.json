@@ -2,31 +2,145 @@
     {
         "id": "PLAYER",
         "properties": {
-            "sprite": 14,
-            "movement_speed": 6,
-            "max_health": 10,
+            "bones": [
+                {
+                    "width": 16,
+                    "height": 23,
+                    "x": 0,
+                    "y": 89,
+                    "offset_x": 0,
+                    "offset_y": 0,
+                    "layer": 0,
+                    "sprite_index": 1
+                },
+                {
+                    "width": 12,
+                    "height": 5,
+                    "x": 0,
+                    "y": 112,
+                    "offset_x": 2,
+                    "offset_y": 9,
+                    "layer": 1,
+                    "sprite_index": 1
+                },
+                {
+                    "width": 6,
+                    "height": 4,
+                    "x": 0,
+                    "y": 117,
+                    "offset_x": 5,
+                    "offset_y": 10,
+                    "layer": 2,
+                    "sprite_index": 1
+                }
+            ],
             "animations": {
-                "default": {
+                "standing": {
                     "looping": true,
                     "frametime": 1,
                     "frames": [
-                        14
-                    ],
-                    "transition": {
-                        "moving": "self.is_moving"
-                    }
+                        {
+                            "1": {
+                                "index": 1
+                            }
+                        }
+                    ]
                 },
-                "moving": {
+                "walking": {
                     "looping": true,
+                    "frametime": 0.15,
+                    "frames": [
+                        {
+                            "1": {
+                                "index": 2
+                            }
+                        },
+                        {
+                            "1": {
+                                "index": 3
+                            }
+                        }
+                    ]
+                },
+                "sleeping": {
+                    "looping": true,
+                    "frametime": 1,
+                    "frames": [
+                        {
+                            "1": {
+                                "index": 4
+                            },
+                            "2": {
+                                "index": 2,
+                                "offset_y": 7
+                            },
+                            "3": {
+                                "offset_y": 7
+                            }
+                        }
+                    ]
+                },
+                "eyes_open": {
+                    "looping": true,
+                    "frametime": 1,
+                    "frames": [
+                        {
+                            "2": {
+                                "index": 1
+                            }
+                        }
+                    ]
+                },
+                "eyes_blink": {
+                    "looping": false,
                     "frametime": 0.25,
                     "frames": [
-                        15, 16
-                    ],
-                    "transition": {
-                        "default": "not self.is_moving"
+                        {
+                            "2": {
+                                "index": 2
+                            }
+                        },
+                        {
+                            "2": {
+                                "index": 1
+                            }
+                        }
+                    ]
+                }
+            },
+            "animation_controllers": {
+                "body": {
+                    "state": "default",
+                    "last_transition": 0,
+                    "default": {
+                        "animations": [
+                            "standing"
+                        ],
+                        "transitions": {
+                            "walking": "self.is_moving",
+                            "sleeping": "elapsed > 5"
+                        }
+                    },
+                    "walking": {
+                        "animations": [
+                            "walking"
+                        ],
+                        "transitions": {
+                            "default": "not self.is_moving"
+                        }
+                    },
+                    "sleeping": {
+                        "animations": [
+                            "sleeping"
+                        ],
+                        "transitions": {
+                            "walking": "self.is_moving"
+                        }
                     }
                 }
-            }
+            },
+            "movement_speed": 6,
+            "max_health": 10
         },
         "persistent": {
             "current_health": 10

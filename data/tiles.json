@@ -6,12 +6,12 @@
     },
     {
         "id": "WATER",
-        "sprite": 5,
+        "sprite": 2,
         "speed_modifier": 0.5
     },
     {
         "id": "SAND",
-        "sprite": 9,
+        "sprite": 3,
         "speed_modifier": 1.5
     }
 ]
