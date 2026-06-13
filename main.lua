@@ -15,20 +15,28 @@
 --   windows: %APPDATA%\com.usagi.savedemo\save.json
 --   web    : window.localStorage, key "usagi.save.com.usagi.savedemo"
 
-local WORLD_SIZE_X = 200 -- in tiles
-local WORLD_SIZE_Y = 200
+require("noise")
+local TILES = require("tiles")
+local ENTITIES = require("entities")
+
+local WORLD_SIZE_X = 320 -- in tiles
+local WORLD_SIZE_Y = 180
+
+local WORLD_CENTER = {
+  x = WORLD_SIZE_X / 2,
+  y = WORLD_SIZE_Y / 2
+}
+
+local MAX_DISTANCE_FROM_CENTER = math.sqrt(2)/2
 
 -- default: 22x14
 -- this extends outside of the game window so that player movement doesn't expose edges
 local CAMERA_SIZE_X = 22 -- in tiles
 local CAMERA_SIZE_Y = 14
-local CAMERA_HALF_X = math.floor(CAMERA_SIZE_X/2)
-local CAMERA_HALF_Y = math.floor(CAMERA_SIZE_Y/2)
+local CAMERA_HALF_X = math.floor(CAMERA_SIZE_X / 2)
+local CAMERA_HALF_Y = math.floor(CAMERA_SIZE_Y / 2)
 
 local TILE_SIZE = 16 -- in pixels
-
-local TILES = require("tiles")
-local ENTITIES = require("entities")
 
 function _config()
   return { name = "Survive Test", game_id = "com.spad4.survive" }
@@ -41,12 +49,50 @@ end
 ---@param y     number  top edge in game-space pixels
 ---@param color integer  a gfx.COLOR_* constant
 local function text_with_shadow(text, x, y, color)
-  gfx.text(text, x+1, y+1, gfx.COLOR_DARK_GRAY)
+  gfx.text(text, x + 1, y + 1, gfx.COLOR_DARK_GRAY)
   gfx.text(text, x, y, color)
 end
 
+local function new_world()
+  local to_return = {}
+  for row = 1, WORLD_SIZE_Y do
+    to_return[row] = {}
+    for col = 1, WORLD_SIZE_X do
+      -- State.world[row][col] = 1
+      to_return[row][col] = math.floor(math.random() * #TILES + 1)
+    end
+  end
+  return to_return
+end
+
+local function new_noise_world()
+  perlin:shuffle()
+  local to_return = {}
+  for row = 1, WORLD_SIZE_Y do
+    to_return[row] = {}
+    for col = 1, WORLD_SIZE_X do
+      -- State.world[row][col] = 1
+      local distance = util.vec_dist({x=col/WORLD_SIZE_X, y=row/WORLD_SIZE_Y}, {x=0.5,y=0.5}) / MAX_DISTANCE_FROM_CENTER
+      local n = perlin:noise(col / 60, row / 60, 1)
+      n -= 0.4 - distance
+
+      local tile = TILES.WATER
+
+      if n < 0 then
+        tile = TILES.GRASS
+      elseif n < 0.1 then
+        tile = TILES.SAND
+      end
+
+
+      to_return[row][col] = tile
+    end
+  end
+  return to_return
+end
+
 local function fresh_state()
-  State = {
+  local to_return = {
     world = {},
     current_tile = 1,
     entities = {
@@ -54,38 +100,34 @@ local function fresh_state()
     }
   }
 
-  for row = 1, WORLD_SIZE_Y do
-    State.world[row] = {}
-    for col = 1, WORLD_SIZE_X do
-      -- State.world[row][col] = 1
-      State.world[row][col] = math.floor(math.random()*#TILES+1)
-    end
-  end
+  to_return.world = new_world()
 
-  State.world[100][100] = 2
+  to_return.world[100][100] = 2
 
-  return State
+  return to_return
 end
 
 local function update_entity_props(state)
   if not state then
     return
   end
-  for i,entity in pairs(state.entities) do
-      local id = entity.id
-      local props = ENTITIES["PROP_"..id]()
-      for k,v in pairs(props) do
-        entity[k] = v
-      end
+  for i, entity in pairs(state.entities) do
+    local id = entity.id
+    local props = ENTITIES["PROP_" .. id]()
+    for k, v in pairs(props) do
+      entity[k] = v
     end
+  end
 end
 
 local function load_state()
-
   local to_return = usagi.load()
-  
+
   -- something was saved; all entities need to have their properties updated
   if (to_return) then
+    if #to_return.world ~= WORLD_SIZE_Y or #to_return.world[1] ~= WORLD_SIZE_X then
+      return fresh_state()
+    end
     update_entity_props(to_return)
     return to_return
   else
@@ -103,6 +145,7 @@ function _init()
     x = Player.x,
     y = Player.y
   }
+  perlin:load()
 end
 
 update_entity_props(State)
@@ -112,6 +155,12 @@ function _update(dt)
     if input.key_pressed(input.KEY_S) then
       usagi.save(State)
       print("save")
+    end
+    if input.key_pressed(input.KEY_C) then
+      State.world = new_world()
+    end
+    if input.key_pressed(input.KEY_V) then
+      State.world = new_noise_world()
     end
     return
   end
@@ -150,14 +199,18 @@ function _update(dt)
     ENTITIES.heal(Player, 1)
   end
 
+  if input.key_pressed(input.KEY_M) then
+    MapEnabled = not MapEnabled
+  end
+
   movement_vector = util.vec_normalize(movement_vector)
   State.current_tile = State.world[math.floor(Player.y + 0.5)][math.floor(Player.x + 0.5)]
   local tile_speed_modifier = TILES[State.current_tile].speed_modifier
-  Player.x += movement_vector.x * Player.movement_speed * tile_speed_modifier
-  Player.y += movement_vector.y * Player.movement_speed * tile_speed_modifier
+  Player.x += movement_vector.x * Player.movement_speed * tile_speed_modifier * dt
+  Player.y += movement_vector.y * Player.movement_speed * tile_speed_modifier * dt
 
-  Camera.x, Camera.y = Player.x, Player.y
-
+  Camera.x = util.clamp(Player.x, CAMERA_HALF_X, WORLD_SIZE_X - CAMERA_HALF_X)
+  Camera.y = util.clamp(Player.y, CAMERA_HALF_Y, WORLD_SIZE_Y - CAMERA_HALF_Y)
 end
 
 local function draw_terrain()
@@ -195,7 +248,7 @@ local function draw_entities()
     x = Camera.x % 1,
     y = Camera.y % 1
   }
-  for _,entity in pairs(State.entities) do
+  for _, entity in pairs(State.entities) do
     local x_from_camera = entity.x - offset.x
     local y_from_camera = entity.y - offset.y
     local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
@@ -206,8 +259,24 @@ local function draw_entities()
   end
 end
 
+local MAP_COLORS = {
+  [1] = gfx.COLOR_GREEN,
+  [2] = gfx.COLOR_BLUE,
+  [3] = gfx.COLOR_YELLOW
+}
+
 local function draw_ui()
   text_with_shadow("HP: " .. Player.current_health, 4, 4, gfx.COLOR_RED)
+
+  if MapEnabled then
+    for row = 1, WORLD_SIZE_Y do
+      for col = 1, WORLD_SIZE_X do
+        gfx.px(col - 1, row - 1, MAP_COLORS[State.world[row][col]])
+      end
+    end
+    gfx.px(Player.x - 1, Player.y - 1, gfx.COLOR_RED)
+  end
+
   if DebugOverlay then
     text_with_shadow(math.floor(Camera.x) .. " " .. math.floor(Camera.y), 5, usagi.GAME_H - 15, gfx.COLOR_LIGHT_GRAY)
     text_with_shadow("standing on:" .. TILES[State.current_tile].id, 5, usagi.GAME_H - 24, gfx.COLOR_LIGHT_GRAY)
@@ -219,9 +288,8 @@ function _draw(_dt)
 
   draw_terrain()
   draw_entities()
-  
+
   if RenderUI then
     draw_ui()
   end
-
 end

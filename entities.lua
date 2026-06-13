@@ -8,6 +8,7 @@ for _, entity in pairs(ENTITIES) do
             ["x"] = x,
             ["y"] = y
         }
+        new_entity["id"] = entity.id
         for k,v in pairs(entity.properties) do
             new_entity[k] = v
         end
