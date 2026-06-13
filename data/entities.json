@@ -1,0 +1,13 @@
+[
+    {
+        "id": "PLAYER",
+        "properties": {
+            "sprite": 13,
+            "movement_speed": 0.1,
+            "max_health": 10
+        },
+        "persistent": {
+            "current_health": 10
+        }
+    }
+]

@@ -27,40 +27,85 @@ local CAMERA_HALF_Y = math.floor(CAMERA_SIZE_Y/2)
 
 local TILE_SIZE = 16 -- in pixels
 
-local MOVE_SPEED = 0.1
-
 local TILES = require("tiles")
+local ENTITIES = require("entities")
 
 function _config()
   return { name = "Survive Test", game_id = "com.spad4.survive" }
 end
 
+---Draws text at (x, y) in the given color. Uses the bundled monogram
+---font at its 16px design size (a 5×7 pixel font with 16px line height).
+---@param text  string  string to render
+---@param x     number  left edge in game-space pixels
+---@param y     number  top edge in game-space pixels
+---@param color integer  a gfx.COLOR_* constant
+local function text_with_shadow(text, x, y, color)
+  gfx.text(text, x+1, y+1, gfx.COLOR_DARK_GRAY)
+  gfx.text(text, x, y, color)
+end
+
 local function fresh_state()
   State = {
     world = {},
-    camera = {
-      x = 100, -- top left of world is 0, 0
-      y = 100, -- bottom right is 200, 200
-    },
-    current_tile = 1
+    current_tile = 1,
+    entities = {
+      [1] = ENTITIES.NEW_PLAYER(100, 100)
+    }
   }
 
   for row = 1, WORLD_SIZE_Y do
     State.world[row] = {}
     for col = 1, WORLD_SIZE_X do
+      -- State.world[row][col] = 1
       State.world[row][col] = math.floor(math.random()*#TILES+1)
     end
   end
 
+  State.world[100][100] = 2
+
   return State
 end
 
+local function update_entity_props(state)
+  if not state then
+    return
+  end
+  for i,entity in pairs(state.entities) do
+      local id = entity.id
+      local props = ENTITIES["PROP_"..id]()
+      for k,v in pairs(props) do
+        entity[k] = v
+      end
+    end
+end
+
+local function load_state()
+
+  local to_return = usagi.load()
+  
+  -- something was saved; all entities need to have their properties updated
+  if (to_return) then
+    update_entity_props(to_return)
+    return to_return
+  else
+    return fresh_state()
+  end
+end
+
 function _init()
-  State = usagi.load() or fresh_state()
+  State = load_state()
   -- State = fresh_state()
   RenderUI = true
   DebugOverlay = false
+  Player = State.entities[1]
+  Camera = {
+    x = Player.x,
+    y = Player.y
+  }
 end
+
+update_entity_props(State)
 
 function _update(dt)
   if input.key_held(input.KEY_LCTRL) then
@@ -97,23 +142,34 @@ function _update(dt)
     movement_vector.x += 1
   end
 
+  if input.key_pressed(input.KEY_X) then
+    ENTITIES.damage(Player, 1)
+  end
+
+  if input.key_pressed(input.KEY_C) then
+    ENTITIES.heal(Player, 1)
+  end
+
   movement_vector = util.vec_normalize(movement_vector)
-  State.current_tile = State.world[math.floor(State.camera.y)][math.floor(State.camera.x)]
-  local tile_speed_modifier = TILES[State.current_tile].movement_speed
-  State.camera.x += movement_vector.x * MOVE_SPEED * tile_speed_modifier
-  State.camera.y += movement_vector.y * MOVE_SPEED * tile_speed_modifier
+  State.current_tile = State.world[math.floor(Player.y + 0.5)][math.floor(Player.x + 0.5)]
+  local tile_speed_modifier = TILES[State.current_tile].speed_modifier
+  Player.x += movement_vector.x * Player.movement_speed * tile_speed_modifier
+  Player.y += movement_vector.y * Player.movement_speed * tile_speed_modifier
+
+  Camera.x, Camera.y = Player.x, Player.y
 
 end
 
 local function draw_terrain()
+  -- world tilemap offset based on camera position
   local offset = {
-    x = math.floor(State.camera.x) - CAMERA_HALF_X,
-    y = math.floor(State.camera.y) - CAMERA_HALF_Y
+    x = math.floor(Camera.x) - CAMERA_HALF_X,
+    y = math.floor(Camera.y) - CAMERA_HALF_Y
   }
 
   local camera_offset = {
-    x = State.camera.x % 1,
-    y = State.camera.y % 1
+    x = Camera.x % 1,
+    y = Camera.y % 1
   }
 
   for row = 1, CAMERA_SIZE_Y do
@@ -130,20 +186,30 @@ local function draw_terrain()
   end
 end
 
----Draws text at (x, y) in the given color. Uses the bundled monogram
----font at its 16px design size (a 5×7 pixel font with 16px line height).
----@param text  string  string to render
----@param x     number  left edge in game-space pixels
----@param y     number  top edge in game-space pixels
----@param color integer  a gfx.COLOR_* constant
-local function text_with_shadow(text, x, y, color)
-  gfx.text(text, x+1, y+1, gfx.COLOR_DARK_GRAY)
-  gfx.text(text, x, y, color)
+local function draw_entities()
+  local offset = {
+    x = math.floor(Camera.x) - CAMERA_HALF_X,
+    y = math.floor(Camera.y) - CAMERA_HALF_Y
+  }
+  local camera_offset = {
+    x = Camera.x % 1,
+    y = Camera.y % 1
+  }
+  for _,entity in pairs(State.entities) do
+    local x_from_camera = entity.x - offset.x
+    local y_from_camera = entity.y - offset.y
+    local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
+    local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
+    if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
+      gfx.spr(entity.sprite, x, y)
+    end
+  end
 end
 
 local function draw_ui()
+  text_with_shadow("HP: " .. Player.current_health, 4, 4, gfx.COLOR_RED)
   if DebugOverlay then
-    text_with_shadow(math.floor(State.camera.x) .. " " .. math.floor(State.camera.y), 5, usagi.GAME_H - 15, gfx.COLOR_LIGHT_GRAY)
+    text_with_shadow(math.floor(Camera.x) .. " " .. math.floor(Camera.y), 5, usagi.GAME_H - 15, gfx.COLOR_LIGHT_GRAY)
     text_with_shadow("standing on:" .. TILES[State.current_tile].id, 5, usagi.GAME_H - 24, gfx.COLOR_LIGHT_GRAY)
   end
 end
@@ -151,8 +217,8 @@ end
 function _draw(_dt)
   gfx.clear(gfx.COLOR_BLACK)
 
-  -- world tilemap offset based on camera position
   draw_terrain()
+  draw_entities()
   
   if RenderUI then
     draw_ui()
