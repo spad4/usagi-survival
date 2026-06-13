@@ -1,0 +1,17 @@
+[
+    {
+        "id": "GRASS",
+        "sprite": 1,
+        "movement_speed": 1
+    },
+    {
+        "id": "WATER",
+        "sprite": 5,
+        "movement_speed": 0.5
+    },
+    {
+        "id": "SAND",
+        "sprite": 9,
+        "movement_speed": 1.5
+    }
+]

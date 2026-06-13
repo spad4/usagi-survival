@@ -29,12 +29,7 @@ local TILE_SIZE = 16 -- in pixels
 
 local MOVE_SPEED = 0.1
 
-local PALETTE = {
-  ["0"] = nil,
-  ["1"] = gfx.COLOR_GREEN,
-  ["2"] = gfx.COLOR_BLUE,
-}
-
+local TILES = require("tiles")
 
 function _config()
   return { name = "Survive Test", game_id = "com.spad4.survive" }
@@ -46,13 +41,14 @@ local function fresh_state()
     camera = {
       x = 100, -- top left of world is 0, 0
       y = 100, -- bottom right is 200, 200
-    }
+    },
+    current_tile = 1
   }
 
   for row = 1, WORLD_SIZE_Y do
     State.world[row] = {}
     for col = 1, WORLD_SIZE_X do
-      State.world[row][col] = math.floor(math.random()*2+1)
+      State.world[row][col] = math.floor(math.random()*#TILES+1)
     end
   end
 
@@ -102,8 +98,10 @@ function _update(dt)
   end
 
   movement_vector = util.vec_normalize(movement_vector)
-  State.camera.x += movement_vector.x * MOVE_SPEED
-  State.camera.y += movement_vector.y * MOVE_SPEED
+  State.current_tile = State.world[math.floor(State.camera.y)][math.floor(State.camera.x)]
+  local tile_speed_modifier = TILES[State.current_tile].movement_speed
+  State.camera.x += movement_vector.x * MOVE_SPEED * tile_speed_modifier
+  State.camera.y += movement_vector.y * MOVE_SPEED * tile_speed_modifier
 
 end
 
@@ -122,7 +120,11 @@ local function draw_terrain()
     for col = 1, CAMERA_SIZE_X do
       local tile = State.world[row + offset.y][col + offset.x]
       if tile ~= 0 then
-        gfx.rect_fill((col - 2 - camera_offset.x) * TILE_SIZE, (row - 2 - camera_offset.y) * TILE_SIZE, TILE_SIZE, TILE_SIZE, PALETTE[tostring(tile)])
+        local x = (col - 2 - camera_offset.x) * TILE_SIZE;
+        local y = (row - 2 - camera_offset.y) * TILE_SIZE;
+        local sprite_index = TILES[tile].sprite
+        gfx.spr(sprite_index, x, y)
+        -- gfx.rect_fill((col - 2 - camera_offset.x) * TILE_SIZE, (row - 2 - camera_offset.y) * TILE_SIZE, TILE_SIZE, TILE_SIZE, PALETTE[tostring(tile)])
       end
     end
   end
@@ -142,6 +144,7 @@ end
 local function draw_ui()
   if DebugOverlay then
     text_with_shadow(math.floor(State.camera.x) .. " " .. math.floor(State.camera.y), 5, usagi.GAME_H - 15, gfx.COLOR_LIGHT_GRAY)
+    text_with_shadow("standing on:" .. TILES[State.current_tile].id, 5, usagi.GAME_H - 24, gfx.COLOR_LIGHT_GRAY)
   end
 end
 
