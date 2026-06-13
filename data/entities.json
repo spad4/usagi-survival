@@ -2,9 +2,31 @@
     {
         "id": "PLAYER",
         "properties": {
-            "sprite": 13,
-            "movement_speed": 5,
-            "max_health": 10
+            "sprite": 14,
+            "movement_speed": 6,
+            "max_health": 10,
+            "animations": {
+                "default": {
+                    "looping": true,
+                    "frametime": 1,
+                    "frames": [
+                        14
+                    ],
+                    "transition": {
+                        "moving": "self.is_moving"
+                    }
+                },
+                "moving": {
+                    "looping": true,
+                    "frametime": 0.25,
+                    "frames": [
+                        15, 16
+                    ],
+                    "transition": {
+                        "default": "not self.is_moving"
+                    }
+                }
+            }
         },
         "persistent": {
             "current_health": 10

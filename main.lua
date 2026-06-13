@@ -16,8 +16,9 @@
 --   web    : window.localStorage, key "usagi.save.com.usagi.savedemo"
 
 require("noise")
-local TILES = require("tiles")
-local ENTITIES = require("entities")
+require("entity")
+local ENTITIES = require("entity_registry")
+local TILES = require("tile_registry")
 
 local WORLD_SIZE_X = 320 -- in tiles
 local WORLD_SIZE_Y = 180
@@ -27,7 +28,7 @@ local WORLD_CENTER = {
   y = WORLD_SIZE_Y / 2
 }
 
-local MAX_DISTANCE_FROM_CENTER = math.sqrt(2)/2
+local MAX_DISTANCE_FROM_CENTER = math.sqrt(2) / 2
 
 -- default: 22x14
 -- this extends outside of the game window so that player movement doesn't expose edges
@@ -72,7 +73,8 @@ local function new_noise_world()
     to_return[row] = {}
     for col = 1, WORLD_SIZE_X do
       -- State.world[row][col] = 1
-      local distance = util.vec_dist({x=col/WORLD_SIZE_X, y=row/WORLD_SIZE_Y}, {x=0.5,y=0.5}) / MAX_DISTANCE_FROM_CENTER
+      local distance = util.vec_dist({ x = col / WORLD_SIZE_X, y = row / WORLD_SIZE_Y }, { x = 0.5, y = 0.5 }) /
+      MAX_DISTANCE_FROM_CENTER
       local n = perlin:noise(col / 60, row / 60, 1)
       n -= 0.4 - distance
 
@@ -174,7 +176,7 @@ function _update(dt)
     RenderUI = not RenderUI
   end
 
-  if input.key_pressed(input.KEY_F3) then
+  if input.key_pressed(input.KEY_BACKTICK) then
     DebugOverlay = not DebugOverlay
   end
 
@@ -192,11 +194,11 @@ function _update(dt)
   end
 
   if input.key_pressed(input.KEY_X) then
-    ENTITIES.damage(Player, 1)
+    Player:damage(1)
   end
 
   if input.key_pressed(input.KEY_C) then
-    ENTITIES.heal(Player, 1)
+    Player:heal(1)
   end
 
   if input.key_pressed(input.KEY_M) then
@@ -206,8 +208,14 @@ function _update(dt)
   movement_vector = util.vec_normalize(movement_vector)
   State.current_tile = State.world[math.floor(Player.y + 0.5)][math.floor(Player.x + 0.5)]
   local tile_speed_modifier = TILES[State.current_tile].speed_modifier
-  Player.x += movement_vector.x * Player.movement_speed * tile_speed_modifier * dt
-  Player.y += movement_vector.y * Player.movement_speed * tile_speed_modifier * dt
+  if movement_vector.x ~= 0 or movement_vector.y ~= 0 then
+    Player.is_moving = true
+    Player.x += movement_vector.x * Player.movement_speed * tile_speed_modifier * dt
+    Player.y += movement_vector.y * Player.movement_speed * tile_speed_modifier * dt
+  else
+    Player.is_moving = false
+  end
+ 
 
   Camera.x = util.clamp(Player.x, CAMERA_HALF_X, WORLD_SIZE_X - CAMERA_HALF_X)
   Camera.y = util.clamp(Player.y, CAMERA_HALF_Y, WORLD_SIZE_Y - CAMERA_HALF_Y)
@@ -249,12 +257,16 @@ local function draw_entities()
     y = Camera.y % 1
   }
   for _, entity in pairs(State.entities) do
-    local x_from_camera = entity.x - offset.x
-    local y_from_camera = entity.y - offset.y
-    local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
-    local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
-    if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
-      gfx.spr(entity.sprite, x, y)
+    setmetatable(entity, {__index = Entity})
+    local sprite = entity:draw()
+    if sprite then
+      local x_from_camera = entity.x - offset.x
+      local y_from_camera = entity.y - offset.y
+      local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
+      local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
+      if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
+        gfx.spr(sprite, x, y)
+      end
     end
   end
 end
@@ -266,7 +278,7 @@ local MAP_COLORS = {
 }
 
 local function draw_ui()
-  text_with_shadow("HP: " .. Player.current_health, 4, 4, gfx.COLOR_RED)
+  text_with_shadow("HP: " .. Player.current_health, 4, usagi.GAME_H - 16, gfx.COLOR_RED)
 
   if MapEnabled then
     for row = 1, WORLD_SIZE_Y do
@@ -278,8 +290,8 @@ local function draw_ui()
   end
 
   if DebugOverlay then
-    text_with_shadow(math.floor(Camera.x) .. " " .. math.floor(Camera.y), 5, usagi.GAME_H - 15, gfx.COLOR_LIGHT_GRAY)
-    text_with_shadow("standing on:" .. TILES[State.current_tile].id, 5, usagi.GAME_H - 24, gfx.COLOR_LIGHT_GRAY)
+    text_with_shadow(math.floor(Camera.x) .. " " .. math.floor(Camera.y), 0, 8, gfx.COLOR_LIGHT_GRAY)
+    text_with_shadow("standing on:" .. TILES[State.current_tile].id, 0, 16, gfx.COLOR_LIGHT_GRAY)
   end
 end
 
