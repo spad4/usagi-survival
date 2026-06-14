@@ -211,10 +211,6 @@ function _update(dt)
     MapEnabled = not MapEnabled
   end
 
-  if input.key_pressed(input.KEY_H) then
-    table.insert(Particles, PARTICLES.NEW_Z(Player.x, Player.y))
-  end
-
   movement_vector = util.vec_normalize(movement_vector)
   State.current_tile = State.world[math.floor(Player.y + 0.5)][math.floor(Player.x + 0.5)]
   local tile_speed_modifier = TILES[State.current_tile].speed_modifier

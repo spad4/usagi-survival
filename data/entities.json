@@ -67,7 +67,7 @@
                 },
                 "sleeping": {
                     "looping": true,
-                    "frametime": 1.25,
+                    "frametime": 1.5,
                     "frames": [
                         {
                             "1": {
@@ -90,10 +90,10 @@
                             },
                             "2": {
                                 "index": 2,
-                                "offset_y": 7
+                                "offset_y": 6
                             },
                             "3": {
-                                "offset_y": 7
+                                "offset_y": 6
                             }
                         }
                     ]
