@@ -2,6 +2,9 @@
     {
         "id": "PLAYER",
         "properties": {
+            "movement_speed": 6,
+            "max_health": 10,
+            "rotates": true,
             "bones": [
                 {
                     "width": 16,
@@ -14,21 +17,21 @@
                     "sprite_index": 1
                 },
                 {
-                    "width": 12,
+                    "width": 16,
                     "height": 5,
                     "x": 0,
-                    "y": 112,
-                    "offset_x": 2,
+                    "y": 158,
+                    "offset_x": 0,
                     "offset_y": 9,
                     "layer": 1,
                     "sprite_index": 1
                 },
                 {
-                    "width": 6,
+                    "width": 16,
                     "height": 4,
                     "x": 0,
-                    "y": 117,
-                    "offset_x": 5,
+                    "y": 174,
+                    "offset_x": 0,
                     "offset_y": 10,
                     "layer": 2,
                     "sprite_index": 1
@@ -138,9 +141,7 @@
                         }
                     }
                 }
-            },
-            "movement_speed": 6,
-            "max_health": 10
+            }
         },
         "persistent": {
             "current_health": 10

@@ -2,25 +2,35 @@ Entity = {
     -- Global Properties
     -- These are properties that are universal to every Entity. Do not include in entities.json
     -- Not refreshed on live reload
-    is_walking = false,
-    x = 0,
-    y = 0,
+    x = 0, -- world x 
+    y = 0, -- world y
+    is_moving = false, -- whether or not the entity is moving of its own accord
+    facing = 0, -- direction the entity is facing, use DIRECTIONS
 
     -- Local Properties
     -- Properties of entities referenced in Entity.properties
     -- Refreshed on live reload
-    id = nil,
-    sprite = nil,
-    bones = nil,
-    animations = nil,
-    animation_controllers = nil,
-    max_health = nil,
+    id = nil, -- id of the entity. the only required property
+    sprite = nil, -- simple sprite to use
+    bones = nil, -- a list of bones for a complex sprite
+    animations = nil, -- a list of modifiers for bones over time
+    animation_controllers = nil, -- a list of state machines to control which animations are playing
+    max_health = nil, 
     movement_speed = nil,
+    rotates = nil, -- whether or not this entity has different sprites for the direction it's facing
 
     -- Persistent Properties
     -- Properties of entities referenced in Entity.persistent
     -- These are NOT refreshed on live reload, only when save data is deleted
     current_health = nil,
+}
+
+-- used to determine which set of sprites to use for entities that rotate
+DIRECTIONS = {
+    DOWN = 0,
+    UP = 1,
+    RIGHT = 2,
+    LEFT = 3
 }
 
 function Entity:damage(amount)
@@ -125,7 +135,18 @@ function Entity:draw(x, y)
         end
 
         local sprite_x = bone.x + (sprite_index - 1) * bone.width
-        gfx.sspr_ex(sprite_x, bone.y, bone.width, bone.height, x + offset_x, y + offset_y, bone.width, bone.height, false, false, 0, gfx.COLOR_TRUE_WHITE, 1)
+        local sprite_y = bone.y
+        local flip = false
+        if self.rotates then
+            local facing = self.facing
+            if facing == 3 then
+                flip = true
+                facing = 2
+            end
+            sprite_y += bone.height * facing
+        end
+
+        gfx.sspr_ex(sprite_x, sprite_y, bone.width, bone.height, x + offset_x, y + offset_y, bone.width, bone.height, flip, false, 0, gfx.COLOR_TRUE_WHITE, 1)
     end
 end
 

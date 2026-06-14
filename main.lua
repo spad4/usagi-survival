@@ -199,15 +199,19 @@ function _update(dt)
 
   if input.key_held(input.KEY_W) then
     movement_vector.y -= 1
+    Player.facing = DIRECTIONS.UP
   end
   if input.key_held(input.KEY_A) then
     movement_vector.x -= 1
+    Player.facing = DIRECTIONS.LEFT
   end
   if input.key_held(input.KEY_S) then
     movement_vector.y += 1
+    Player.facing = DIRECTIONS.DOWN
   end
   if input.key_held(input.KEY_D) then
     movement_vector.x += 1
+    Player.facing = DIRECTIONS.RIGHT
   end
 
   if input.key_pressed(input.KEY_X) then
