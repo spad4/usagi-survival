@@ -1,15 +1,18 @@
 [
     {
-        "id": "TEST",
+        "id": "PLACE_TILE",
         "duration": 0,
         "frequency": 0.1,
         "particles": [
             {
-                "id": "HEAL",
+                "id": "CHIP",
                 "x_spread": 1,
                 "y_spread": 1,
                 "count": 10,
-                "outline": false
+                "outline": false,
+                "vars": {
+                    "color": "self.color"
+                }
             }
         ]
     }

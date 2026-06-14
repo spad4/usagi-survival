@@ -2,7 +2,7 @@
     {
         "id": "PLAYER",
         "properties": {
-            "movement_speed": 6,
+            "movement_speed": 7,
             "max_health": 10,
             "rotates": true,
             "bones": [

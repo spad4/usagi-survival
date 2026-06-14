@@ -249,6 +249,7 @@ function _update(dt)
     end
     if input.key_pressed(input.KEY_C) then
       State.world = new_noise_world()
+      TileDisplayGrids = generate_display_grids(State.world)
     end
 
     return
@@ -305,13 +306,14 @@ function _update(dt)
   if input.key_pressed(input.KEY_3) then
     BuildingWith = TILES.SAND
   end
-  if input.key_pressed(input.KEY_H) then
-    TileDisplayGrids = generate_display_grids(State.world)
-  end
+  -- if input.key_pressed(input.KEY_H) then
+  --   TileDisplayGrids = generate_display_grids(State.world)
+  -- end
 
   if input.key_held(input.KEY_SPACE) then
     -- State.world[SelectedTile.y][SelectedTile.x].tile = BuildingWith
     place_tile(SelectedTile.x, SelectedTile.y, BuildingWith)
+    -- PARTICLE_EMITTERS.NEW_
   end
 
   movement_vector = util.vec_normalize(movement_vector)
