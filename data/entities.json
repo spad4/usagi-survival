@@ -12,7 +12,7 @@
                     "x": 0,
                     "y": 89,
                     "offset_x": 0,
-                    "offset_y": 0,
+                    "offset_y": -12,
                     "layer": 0,
                     "sprite_index": 1
                 },
@@ -22,7 +22,7 @@
                     "x": 0,
                     "y": 158,
                     "offset_x": 0,
-                    "offset_y": 9,
+                    "offset_y": -3,
                     "layer": 1,
                     "sprite_index": 1
                 },
@@ -32,7 +32,7 @@
                     "x": 0,
                     "y": 174,
                     "offset_x": 0,
-                    "offset_y": 10,
+                    "offset_y": -2,
                     "layer": 2,
                     "sprite_index": 1
                 }

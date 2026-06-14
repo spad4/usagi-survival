@@ -6,7 +6,7 @@
         "text": "'z'",
         "color": "'LIGHT_GRAY'",
         "dx": "self.age * -2",
-        "dy": "self.age * -2",
+        "dy": "self.age * -2 - 10",
         "alpha": "1 - self.age / self.duration",
         "shadow": false
     },
@@ -17,7 +17,7 @@
         "text": "'-' .. self.amount or 0",
         "color": "'RED'",
         "dx": "self.age * (self.random_1 * -64 + 32)",
-        "dy": "2 * ((8 * self.age - 2) ^ 2)",
+        "dy": "2 * ((8 * self.age - 2) ^ 2) - 10",
         "alpha": "self.age < self.duration / 2 and 1 or (1 - self.age / self.duration)",
         "shadow": false
     },
@@ -28,7 +28,18 @@
         "text": "'+' .. self.amount or 0",
         "color": "'GREEN'",
         "dx": "self.age * (self.random_1 * -64 + 32)",
-        "dy": "2 * ((8 * self.age - 2) ^ 2)",
+        "dy": "2 * ((8 * self.age - 2) ^ 2) - 10",
+        "alpha": "self.age < self.duration / 2 and 1 or (1 - self.age / self.duration)",
+        "shadow": false
+    },
+    {
+        "id": "HEAL",
+        "duration": 0.5,
+        "type": "text",
+        "text": "'+'",
+        "color": "self.random_3 > 0.5 and 'YELLOW' or 'GREEN'",
+        "dx": "self.age * (self.random_1 * 20 - 10)",
+        "dy": "self.age * (self.random_2 * 20 - 10)",
         "alpha": "self.age < self.duration / 2 and 1 or (1 - self.age / self.duration)",
         "shadow": false
     },

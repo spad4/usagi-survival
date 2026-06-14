@@ -1,19 +1,25 @@
 [
     {
         "id": "GRASS",
-        "sprite": 1,
+        "sprite_x": 64,
+        "sprite_y": 0,
+        "priority": 3,
         "speed_modifier": 1,
         "map_color": "GREEN"
     },
     {
         "id": "WATER",
-        "sprite": 2,
+        "sprite_x": 128,
+        "sprite_y": 0,
+        "priority": 2,
         "speed_modifier": 0.5,
         "map_color": "BLUE"
     },
     {
         "id": "SAND",
-        "sprite": 3,
+        "sprite_x": 192,
+        "sprite_y": 0,
+        "priority": 1,
         "speed_modifier": 1.5,
         "map_color": "YELLOW"
     }

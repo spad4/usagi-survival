@@ -183,5 +183,3 @@ function Entity:draw()
             flip, false, 0, tint, 1)
     end
 end
-
-return Entity

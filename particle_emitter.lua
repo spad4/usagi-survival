@@ -16,6 +16,9 @@ Particle_Emitter = {
 }
 
 function Particle_Emitter:compute(expression)
+    if type(expression) ~= "string" then
+        return expression
+    end
     local c, err = load("return function (self) return " .. expression .. " end", "expression", "t")
     if not c then return 0 end
 
@@ -52,5 +55,3 @@ function Particle_Emitter:emit()
         end
     end
 end
-
-return Particle_Emitter

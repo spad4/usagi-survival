@@ -1,0 +1,10 @@
+[
+    {
+        "id": "AIR",
+        "health": -1
+    },
+    {
+        "id": "STONE",
+        "sprite": 33
+    }
+]
