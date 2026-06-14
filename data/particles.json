@@ -2,16 +2,84 @@
     {
         "id": "Z",
         "duration": 6,
-        "components": [
-            {
-                "type": "text",
-                "text": "'z'",
-                "color": "LIGHT_GRAY",
-                "dx": "age * -2",
-                "dy": "age * -2",
-                "fade": true,
-                "shadow": false
-            }
-        ]
+        "type": "text",
+        "text": "'z'",
+        "color": "'LIGHT_GRAY'",
+        "dx": "self.age * -2",
+        "dy": "self.age * -2",
+        "alpha": "1 - self.age / self.duration",
+        "shadow": false
+    },
+    {
+        "id": "DAMAGE_NUMBER",
+        "duration": 0.5,
+        "type": "text",
+        "text": "'-' .. self.amount or 0",
+        "color": "'RED'",
+        "dx": "self.age * (self.random_1 * -64 + 32)",
+        "dy": "2 * ((8 * self.age - 2) ^ 2)",
+        "alpha": "self.age < self.duration / 2 and 1 or (1 - self.age / self.duration)",
+        "shadow": false
+    },
+    {
+        "id": "HEAL_NUMBER",
+        "duration": 0.5,
+        "type": "text",
+        "text": "'+' .. self.amount or 0",
+        "color": "'GREEN'",
+        "dx": "self.age * (self.random_1 * -64 + 32)",
+        "dy": "2 * ((8 * self.age - 2) ^ 2)",
+        "alpha": "self.age < self.duration / 2 and 1 or (1 - self.age / self.duration)",
+        "shadow": false
+    },
+    {
+        "id": "CALM_SMOKE",
+        "duration": 1.5,
+        "type": "circle",
+        "color": "self.random_1 > 0.5 and 'DARK_GRAY' or 'BLACK'",
+        "dx": "self.age * -1 * (self.random_1 * 4 + 2)",
+        "dy": "self.age * -10",
+        "radius": "(self.random_1 + 2) * (1 - self.age / self.duration)"
+    },
+    {
+        "id": "LARGE_SMOKE",
+        "duration": 5,
+        "type": "circle",
+        "color": "self.random_1 > 0.5 and 'DARK_GRAY' or 'BLACK'",
+        "dx": "self.age * -0.5 * self.random_1",
+        "dy": "self.age * -10",
+        "radius": "self.random_1 * 3 + 7"
+    },
+    {
+        "id": "BUBBLE",
+        "duration": 0.5,
+        "type": "circle",
+        "color": "'BLUE'",
+        "dx": "self.age * -0.5 * self.random_1",
+        "dy": "self.age * -20",
+        "radius": "self.random_1 + 1.5",
+        "outline": "0.95"
+    },
+    {
+        "id": "CHIP",
+        "duration": 0.5,
+        "type": "triangle",
+        "color": "'BROWN'",
+        "dx": "self.age * (self.random_1 * -64 + 32)",
+        "dy": "2 * ((8 * self.age - 2) ^ 2)",
+        "size": "(self.random_2 * 2 + 3) * (1 - self.age / self.duration)",
+        "hollow": false,
+        "dr": "self.random_1 + self.age * (self.random_1 * 2 - 4)"
+    },
+    {
+        "id": "FLAME",
+        "duration": 0.5,
+        "type": "triangle",
+        "color": "self.age > 0.3 and 'RED' or self.age > 0.1 and 'ORANGE' or 'YELLOW'",
+        "dx": "self.age * -1 * (self.random_1 * 4 + 2)",
+        "dy": "self.age * -10",
+        "size": "(self.random_2 * 2 + 3) * (1 - self.age / self.duration + 0.5)",
+        "hollow": false,
+        "dr": "self.random_1 * 4"
     }
 ]

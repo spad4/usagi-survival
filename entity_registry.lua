@@ -2,7 +2,7 @@ require("entity")
 
 local load_entities = usagi.read_json("entities.json")
 
-local ENTITIES = {}
+ENTITIES = {}
 
 for _, entity in pairs(load_entities) do
     ENTITIES["NEW_" .. entity.id] = function (x, y) 
@@ -30,5 +30,3 @@ for _, entity in pairs(load_entities) do
         return props
     end
 end
-
-return ENTITIES

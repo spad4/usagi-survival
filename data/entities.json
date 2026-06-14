@@ -124,6 +124,17 @@
                             }
                         }
                     ]
+                },
+                "eyes_squint": {
+                    "looping": false,
+                    "frametime": 0.25,
+                    "frames": [
+                        {
+                            "2": {
+                                "index": 4
+                            }
+                        }
+                    ]
                 }
             },
             "animation_controllers": {
@@ -153,6 +164,24 @@
                         ],
                         "transitions": {
                             "walking": "self.is_moving"
+                        }
+                    }
+                },
+                "eyes": {
+                    "state": "default",
+                    "last_transition": 0,
+                    "default": {
+                        "animations": [],
+                        "transitions": {
+                            "hurt": "usagi.elapsed - self.last_damage < 0.25"
+                        }
+                    },
+                    "hurt": {
+                        "animations": [
+                            "eyes_squint"
+                        ],
+                        "transitions": {
+                            "default": "elapsed > 0.25"
                         }
                     }
                 }

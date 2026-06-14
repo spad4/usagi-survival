@@ -2,20 +2,21 @@ Entity = {
     -- Global Properties
     -- These are properties that are universal to every Entity. Do not include in entities.json
     -- Not refreshed on live reload
-    x = 0, -- world x 
-    y = 0, -- world y
+    x = 0,             -- world x
+    y = 0,             -- world y
     is_moving = false, -- whether or not the entity is moving of its own accord
-    facing = 0, -- direction the entity is facing, use DIRECTIONS
+    facing = 0,        -- direction the entity is facing, use DIRECTIONS
+    last_damage = 0,
 
     -- Local Properties
     -- Properties of entities referenced in Entity.properties
     -- Refreshed on live reload
-    id = nil, -- id of the entity. the only required property
-    sprite = nil, -- simple sprite to use
-    bones = nil, -- a list of bones for a complex sprite
-    animations = nil, -- a list of modifiers for bones over time
+    id = nil,                    -- id of the entity. the only required property
+    sprite = nil,                -- simple sprite to use
+    bones = nil,                 -- a list of bones for a complex sprite
+    animations = nil,            -- a list of modifiers for bones over time
     animation_controllers = nil, -- a list of state machines to control which animations are playing
-    max_health = nil, 
+    max_health = nil,
     movement_speed = nil,
     rotates = nil, -- whether or not this entity has different sprites for the direction it's facing
 
@@ -35,17 +36,28 @@ DIRECTIONS = {
 
 function Entity:damage(amount)
     if self.current_health and self.max_health then
+        local old = self.current_health
         self.current_health = util.clamp(self.current_health - amount, 0, self.max_health)
+        PARTICLES.NEW_DAMAGE_NUMBER(self.x, self.y, {amount = old - self.current_health})
+        if old - self.current_health > 0 then
+            self.last_damage = usagi.elapsed
+        end
     end
 end
 
 function Entity:heal(amount)
     if self.current_health and self.max_health then
+        local old = self.current_health
         self.current_health = util.clamp(self.current_health + amount, 0, self.max_health)
+        PARTICLES.NEW_HEAL_NUMBER(self.x, self.y, {amount = self.current_health - old})
     end
 end
 
-function Entity:draw(x, y)
+function Entity:draw()
+    local pos = Pos_To_Screen({ x = self.x, y = self.y })
+    if (pos.x_from_camera < 1 or pos.x_from_camera > CAMERA_SIZE_X + 1 or pos.y_from_camera < 1 and pos.y_from_camera > CAMERA_SIZE_Y) then return end
+
+    local x, y = pos.x, pos.y
 
     -- any entity with a simple sprite
     if self.sprite then
@@ -71,7 +83,8 @@ function Entity:draw(x, y)
                 for name, condition in pairs(transitions) do
                     if controller[name] then
                         local random = math.random()
-                        local c, err = load("return function (self, random, elapsed) return " .. condition .. " end", "condition", "t")
+                        local c, err = load("return function (self, random, elapsed) return " .. condition .. " end",
+                            "condition", "t")
                         if c then
                             local ok, check = pcall(c)
                             if ok and check(self, random, usagi.elapsed - controller.last_transition) then
@@ -85,7 +98,6 @@ function Entity:draw(x, y)
 
             -- get the list of animations the current controller is applying
             for _, name in ipairs(controller[controller.state].animations) do
-                
                 local animation = animations[name]
                 if not animation then return end
 
@@ -97,7 +109,6 @@ function Entity:draw(x, y)
 
                 if looping then
                     frames_elapsed = frames_elapsed % frame_count + 1
-                    
                 else
                     if (frames_elapsed > frame_count) then
                         frames_elapsed = frame_count
@@ -122,7 +133,7 @@ function Entity:draw(x, y)
                             for _, particle in pairs(modifier.particles) do
                                 local offset_x = (modifier.offset_x or 0) / TILE_SIZE
                                 local offset_y = (modifier.offset_y or 0) / TILE_SIZE
-                                table.insert(Particles, PARTICLES["NEW_"..particle](Player.x + offset_x, Player.y + offset_y))
+                                PARTICLES["NEW_" .. particle](Player.x + offset_x, Player.y + offset_y)
                             end
                         end
                     end
@@ -162,18 +173,15 @@ function Entity:draw(x, y)
             sprite_y += bone.height * facing
         end
 
-        gfx.sspr_ex(sprite_x, sprite_y, bone.width, bone.height, x + offset_x, y + offset_y, bone.width, bone.height, flip, false, 0, gfx.COLOR_TRUE_WHITE, 1)
-    end
-end
+        local tint = gfx.COLOR_TRUE_WHITE
 
-function Entity:play_animation(animation)
-    local check = self.animations[animation]
-    if not check then
-        return
-    end
+        if usagi.elapsed - self.last_damage < 0.25 then
+            tint = gfx.COLOR_PEACH
+        end
 
-    self.current_animation = animation
-    self.animation_start = usagi.elapsed
+        gfx.sspr_ex(sprite_x, sprite_y, bone.width, bone.height, x + offset_x, y + offset_y, bone.width, bone.height,
+            flip, false, 0, tint, 1)
+    end
 end
 
 return Entity

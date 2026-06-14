@@ -18,9 +18,11 @@
 require("noise")
 require("entity")
 require("particle")
-ENTITIES = require("entity_registry")
-PARTICLES = require("particle_registry")
-TILES = require("tile_registry")
+require("particle_emitter")
+require("entity_registry")
+require("particle_emitter_registry")
+require("particle_registry")
+require("tile_registry")
 
 WORLD_SIZE_X = 320 -- in tiles
 WORLD_SIZE_Y = 180
@@ -76,7 +78,7 @@ local function new_noise_world()
     for col = 1, WORLD_SIZE_X do
       -- State.world[row][col] = 1
       local distance = util.vec_dist({ x = col / WORLD_SIZE_X, y = row / WORLD_SIZE_Y }, { x = 0.5, y = 0.5 }) /
-      MAX_DISTANCE_FROM_CENTER
+          MAX_DISTANCE_FROM_CENTER
       local n = perlin:noise(col / 60, row / 60, 1)
       n -= 0.4 - distance
 
@@ -145,7 +147,11 @@ function _init()
   Player = State.entities[1]
   Camera = {
     x = Player.x,
-    y = Player.y
+    y = Player.y,
+    origin_x = math.floor(Player.x) - CAMERA_HALF_X,
+    origin_y = math.floor(Player.y) - CAMERA_HALF_Y,
+    frac_x = Player.x % 1,
+    frac_y = Player.y % 1
   }
   perlin:load()
 end
@@ -153,7 +159,6 @@ end
 update_entity_props(State)
 
 function _update(dt)
-
   local control = input.key_held(input.KEY_LCTRL)
   local shift = input.key_held(input.KEY_LSHIFT)
 
@@ -165,7 +170,7 @@ function _update(dt)
     if input.key_pressed(input.KEY_C) then
       State.world = new_noise_world()
     end
-    
+
     return
   end
 
@@ -178,7 +183,7 @@ function _update(dt)
     RenderUI = not RenderUI
   end
 
-  if input.key_pressed(input.KEY_BACKTICK) then
+  if input.key_pressed(input.KEY_F3) then
     DebugOverlay = not DebugOverlay
   end
 
@@ -211,6 +216,10 @@ function _update(dt)
     MapEnabled = not MapEnabled
   end
 
+  if input.key_pressed(input.KEY_H) then
+    PARTICLE_EMITTERS.NEW_TEST(Player.x, Player.y)
+  end
+
   movement_vector = util.vec_normalize(movement_vector)
   State.current_tile = State.world[math.floor(Player.y + 0.5)][math.floor(Player.x + 0.5)]
   local tile_speed_modifier = TILES[State.current_tile].speed_modifier
@@ -221,30 +230,23 @@ function _update(dt)
   else
     Player.is_moving = false
   end
- 
 
   Camera.x = util.clamp(Player.x, CAMERA_HALF_X, WORLD_SIZE_X - CAMERA_HALF_X)
   Camera.y = util.clamp(Player.y, CAMERA_HALF_Y, WORLD_SIZE_Y - CAMERA_HALF_Y)
+  Camera.origin_x = math.floor(Camera.x) - CAMERA_HALF_X
+  Camera.origin_y = math.floor(Camera.y) - CAMERA_HALF_Y
+  Camera.frac_x = Camera.x % 1
+  Camera.frac_y = Camera.y % 1
 end
 
 local function draw_terrain()
   -- world tilemap offset based on camera position
-  local offset = {
-    x = math.floor(Camera.x) - CAMERA_HALF_X,
-    y = math.floor(Camera.y) - CAMERA_HALF_Y
-  }
-
-  local camera_offset = {
-    x = Camera.x % 1,
-    y = Camera.y % 1
-  }
-
   for row = 1, CAMERA_SIZE_Y do
     for col = 1, CAMERA_SIZE_X do
-      local tile = State.world[row + offset.y][col + offset.x]
+      local tile = State.world[row + Camera.origin_y][col + Camera.origin_x]
       if tile ~= 0 then
-        local x = (col - 2 - camera_offset.x) * TILE_SIZE;
-        local y = (row - 2 - camera_offset.y) * TILE_SIZE;
+        local x = (col - 2 - Camera.frac_x) * TILE_SIZE;
+        local y = (row - 2 - Camera.frac_y) * TILE_SIZE;
         local sprite_index = TILES[tile].sprite
         gfx.spr(sprite_index, x, y)
       end
@@ -252,24 +254,20 @@ local function draw_terrain()
   end
 end
 
+function Pos_To_Screen(vec)
+  local to_return = {}
+  to_return.x_from_camera = vec.x - Camera.origin_x
+  to_return.y_from_camera = vec.y - Camera.origin_y
+  to_return.x = (to_return.x_from_camera - 2 - Camera.frac_x) * TILE_SIZE;
+  to_return.y = (to_return.y_from_camera - 2 - Camera.frac_y) * TILE_SIZE;
+
+  return to_return
+end
+
 local function draw_entities()
-  local offset = {
-    x = math.floor(Camera.x) - CAMERA_HALF_X,
-    y = math.floor(Camera.y) - CAMERA_HALF_Y
-  }
-  local camera_offset = {
-    x = Camera.x % 1,
-    y = Camera.y % 1
-  }
   for _, entity in pairs(State.entities) do
-    setmetatable(entity, {__index = Entity})
-    local x_from_camera = entity.x - offset.x
-    local y_from_camera = entity.y - offset.y
-    if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X+1 and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
-      local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
-      local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
-      entity:draw(x, y)
-    end
+    setmetatable(entity, { __index = Entity })
+    entity:draw()
   end
 end
 
@@ -303,6 +301,7 @@ function _draw(_dt)
 
   draw_terrain()
   draw_entities()
+  Run_Emitters()
   Draw_Particles()
 
   if RenderUI then
