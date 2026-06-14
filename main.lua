@@ -17,27 +17,29 @@
 
 require("noise")
 require("entity")
-local ENTITIES = require("entity_registry")
-local TILES = require("tile_registry")
+require("particle")
+ENTITIES = require("entity_registry")
+PARTICLES = require("particle_registry")
+TILES = require("tile_registry")
 
-local WORLD_SIZE_X = 320 -- in tiles
-local WORLD_SIZE_Y = 180
+WORLD_SIZE_X = 320 -- in tiles
+WORLD_SIZE_Y = 180
 
-local WORLD_CENTER = {
+WORLD_CENTER = {
   x = WORLD_SIZE_X / 2,
   y = WORLD_SIZE_Y / 2
 }
 
-local MAX_DISTANCE_FROM_CENTER = math.sqrt(2) / 2
+MAX_DISTANCE_FROM_CENTER = math.sqrt(2) / 2
 
 -- default: 22x14
 -- this extends outside of the game window so that player movement doesn't expose edges
-local CAMERA_SIZE_X = 22 -- in tiles
-local CAMERA_SIZE_Y = 14
-local CAMERA_HALF_X = math.floor(CAMERA_SIZE_X / 2)
-local CAMERA_HALF_Y = math.floor(CAMERA_SIZE_Y / 2)
+CAMERA_SIZE_X = 22 -- in tiles
+CAMERA_SIZE_Y = 14
+CAMERA_HALF_X = math.floor(CAMERA_SIZE_X / 2)
+CAMERA_HALF_Y = math.floor(CAMERA_SIZE_Y / 2)
 
-local TILE_SIZE = 16 -- in pixels
+TILE_SIZE = 16 -- in pixels
 
 function _config()
   return { name = "Survive Test", game_id = "com.spad4.survive" }
@@ -150,29 +152,12 @@ end
 
 update_entity_props(State)
 
-local function draw_entities()
-  local offset = {
-    x = math.floor(Camera.x) - CAMERA_HALF_X,
-    y = math.floor(Camera.y) - CAMERA_HALF_Y
-  }
-  local camera_offset = {
-    x = Camera.x % 1,
-    y = Camera.y % 1
-  }
-  for _, entity in pairs(State.entities) do
-    setmetatable(entity, {__index = Entity})
-    local x_from_camera = entity.x - offset.x
-    local y_from_camera = entity.y - offset.y
-    if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X+1 and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
-      local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
-      local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
-      entity:draw(x, y)
-    end
-  end
-end
-
 function _update(dt)
-  if input.key_held(input.KEY_LCTRL) then
+
+  local control = input.key_held(input.KEY_LCTRL)
+  local shift = input.key_held(input.KEY_LSHIFT)
+
+  if control then
     if input.key_pressed(input.KEY_S) then
       usagi.save(State)
       print("save")
@@ -199,19 +184,19 @@ function _update(dt)
 
   if input.key_held(input.KEY_W) then
     movement_vector.y -= 1
-    Player.facing = DIRECTIONS.UP
+    if not shift then Player.facing = DIRECTIONS.UP end
   end
   if input.key_held(input.KEY_A) then
     movement_vector.x -= 1
-    Player.facing = DIRECTIONS.LEFT
+    if not shift then Player.facing = DIRECTIONS.LEFT end
   end
   if input.key_held(input.KEY_S) then
     movement_vector.y += 1
-    Player.facing = DIRECTIONS.DOWN
+    if not shift then Player.facing = DIRECTIONS.DOWN end
   end
   if input.key_held(input.KEY_D) then
     movement_vector.x += 1
-    Player.facing = DIRECTIONS.RIGHT
+    if not shift then Player.facing = DIRECTIONS.RIGHT end
   end
 
   if input.key_pressed(input.KEY_X) then
@@ -227,12 +212,7 @@ function _update(dt)
   end
 
   if input.key_pressed(input.KEY_H) then
-    local slime = ENTITIES.NEW_SLIME(Player.x, Player.y)
-    table.insert(State.entities, slime)
-  end
-
-  if input.key_pressed(input.KEY_T) then
-    DRAW = true
+    table.insert(Particles, PARTICLES.NEW_Z(Player.x, Player.y))
   end
 
   movement_vector = util.vec_normalize(movement_vector)
@@ -276,6 +256,28 @@ local function draw_terrain()
   end
 end
 
+local function draw_entities()
+  local offset = {
+    x = math.floor(Camera.x) - CAMERA_HALF_X,
+    y = math.floor(Camera.y) - CAMERA_HALF_Y
+  }
+  local camera_offset = {
+    x = Camera.x % 1,
+    y = Camera.y % 1
+  }
+  for _, entity in pairs(State.entities) do
+    setmetatable(entity, {__index = Entity})
+    local x_from_camera = entity.x - offset.x
+    local y_from_camera = entity.y - offset.y
+    if (x_from_camera >= 1 and x_from_camera <= CAMERA_SIZE_X+1 and y_from_camera >= 1 and y_from_camera <= CAMERA_SIZE_Y) then
+      local x = (x_from_camera - 2 - camera_offset.x) * TILE_SIZE;
+      local y = (y_from_camera - 2 - camera_offset.y) * TILE_SIZE;
+      entity:draw(x, y)
+    end
+  end
+end
+
+
 local MAP_COLORS = {
   [1] = gfx.COLOR_GREEN,
   [2] = gfx.COLOR_BLUE,
@@ -301,16 +303,11 @@ local function draw_ui()
 end
 
 function _draw(_dt)
-  -- if DRAW then
-  --   gfx.clear(gfx.COLOR_BLACK)
-  --   draw_entities()
-  --   print(Player.is_moving)
-  --   DRAW = false
-  -- end
   gfx.clear(gfx.COLOR_BLACK)
 
   draw_terrain()
   draw_entities()
+  Draw_Particles()
 
   if RenderUI then
     draw_ui()

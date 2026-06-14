@@ -67,8 +67,23 @@
                 },
                 "sleeping": {
                     "looping": true,
-                    "frametime": 1,
+                    "frametime": 1.25,
                     "frames": [
+                        {
+                            "1": {
+                                "index": 4
+                            },
+                            "2": {
+                                "index": 2,
+                                "offset_y": 7
+                            },
+                            "3": {
+                                "offset_y": 7,
+                                "particles": [
+                                    "Z"
+                                ]
+                            }
+                        },
                         {
                             "1": {
                                 "index": 4
@@ -129,7 +144,7 @@
                             "walking"
                         ],
                         "transitions": {
-                            "default": "not self.is_moving"
+                            "default": "not self.is_moving and elapsed > 0.15"
                         }
                     },
                     "sleeping": {

@@ -97,18 +97,34 @@ function Entity:draw(x, y)
 
                 if looping then
                     frames_elapsed = frames_elapsed % frame_count + 1
+                    
                 else
                     if (frames_elapsed > frame_count) then
                         frames_elapsed = frame_count
                     end
                 end
 
+                -- is this a terrible solution? i have no clue.. ..probably..
+                -- this might not be specific to each entity? we'll see i guess
+                local frame_changed = false
+                local last = animation.last_frame or 0
+                if frames_elapsed ~= last then
+                    frame_changed = true
+                    animation.last_frame = frames_elapsed
+                end
+
                 -- get the current frame
                 local frame = frames[frames_elapsed]
                 for bone, modifier in pairs(frame) do
                     if bones[tonumber(bone)] then
-                    --    bones[tonumber(bone)].sprite_index = modifiers.index
                         bone_modifiers[bone] = modifier
+                        if modifier.particles and frame_changed then
+                            for _, particle in pairs(modifier.particles) do
+                                local offset_x = (modifier.offset_x or 0) / TILE_SIZE
+                                local offset_y = (modifier.offset_y or 0) / TILE_SIZE
+                                table.insert(Particles, PARTICLES["NEW_"..particle](Player.x + offset_x, Player.y + offset_y))
+                            end
+                        end
                     end
                 end
             end

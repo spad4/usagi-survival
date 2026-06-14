@@ -1,0 +1,17 @@
+[
+    {
+        "id": "Z",
+        "duration": 5,
+        "components": [
+            {
+                "type": "text",
+                "text": "'z'",
+                "color": "LIGHT_GRAY",
+                "dx": "age * -2",
+                "dy": "age * -2",
+                "fade": true,
+                "shadow": false
+            }
+        ]
+    }
+]
