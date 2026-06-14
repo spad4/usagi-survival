@@ -39,7 +39,8 @@ function Entity:draw(x, y)
 
     -- any entity with a simple sprite
     if self.sprite then
-        gfx.spr(self.sprite, x, y)
+        gfx.spr(self.sprite, x, y + 8)
+        return
     end
 
     -- any entity with a model (has animations, multiple bones, etc)
